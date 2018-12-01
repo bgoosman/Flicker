@@ -1,0 +1,17 @@
+ofxAbletonLink
+ofxAbletonLive
+ofxBenG
+ofxBlackmagic
+ofxEasing
+ofxIntersection
+ofxKinect
+ofxMaxim
+ofxMidi
+ofxMidiFighterTwister
+ofxOpenCv
+ofxOsc
+ofxPS3EyeGrabber
+ofxPlaymodes
+ofxPoco
+ofxSyphon
+ofxXmlSettings
