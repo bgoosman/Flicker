@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Flicker Debug" type="AppleRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Flicker" TARGET_NAME="Flicker" CONFIG_NAME="Debug" SCHEME_NAME="Flicker Debug" RUN_TARGET_PROJECT_NAME="Flicker" RUN_TARGET_NAME="Flicker" MAKE_ACTIVE="TRUE">
+    <envs />
+    <method />
+  </configuration>
+</component>
