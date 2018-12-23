@@ -12,9 +12,9 @@ ofApp::~ofApp() {
 //--------------------------------------------------------------
 void ofApp::setup() {
     ofSetLogLevel(OF_LOG_WARNING);
-    int const desiredWidth = 800;
-    int const desiredHeight = 600;
-    int const desiredFps = 30;
+    int const desiredWidth = 1280;
+    int const desiredHeight = 720;
+    int const desiredFps = 60;
     int const defaultBufferSize = 1;
     double const beatsPerMinute = 60;
     streamManager = new ofxBenG::stream_manager(desiredWidth, desiredHeight, desiredFps, defaultBufferSize);
@@ -92,19 +92,16 @@ void ofApp::keyReleased(int key) {
     }
     
     if (key == 's') {
-        int const beatsBetweenClips = 30;
+        int const measure = 8;
         timeline->scheduleNextWholeBeat(new ofxBenG::generic_action([this]() {
             ofxBenG::ableton()->setClockToZero();
-            timeline->schedule(0, new ofxBenG::generic_action([this]() { scheduleNextMeasure(); }));
-            timeline->schedule(beatsBetweenClips, playClip("hammer", "hammer on metal 2"));
-            timeline->schedule(beatsBetweenClips * 2, playClip("cat", "Modular UI - Source Recordings -Solo Beeps-028-50Sec"));
-            timeline->schedule(beatsBetweenClips * 3, playClip("popcorn", "Modular UI - Confirm ToneFM-069"));
-            timeline->schedule(beatsBetweenClips * 4, playClip("additive faceplant shimmer", "Additive Faceplant"));
+            timeline->schedule(0, playClip("bros", "drier egg timer"));
+            timeline->schedule(measure, new ofxBenG::generic_action([this]() { scheduleNextMeasure(); }));
+            timeline->schedule(measure * 2, playClip("hammer", "hammer on metal 2"));
             const int fiveMinutes = 60 * 5;
-            timeline->schedule(fiveMinutes - beatsBetweenClips * 3, stopClip("popcorn", "Modular UI - Confirm ToneFM-069"));
-            timeline->schedule(fiveMinutes - beatsBetweenClips * 2, stopClip("cat", "Modular UI - Source Recordings -Solo Beeps-028-50Sec"));
-            timeline->schedule(fiveMinutes - beatsBetweenClips, stopClip("additive faceplant shimmer", "Additive Faceplant"));
-            timeline->schedule(fiveMinutes, stopClip("hammer", "hammer on metal 2"));
+            timeline->schedule(fiveMinutes - measure * 2, stopClip("wistful elegiac drone", "volca loop 6"));
+            timeline->schedule(fiveMinutes - measure, stopClip("hammer", "hammer on metal 2"));
+            timeline->schedule(fiveMinutes, stopClip("bros", "drier egg timer"));
             timeline->schedule(fiveMinutes - 1, new ofxBenG::generic_action([this]() {
                 stopAll = true;
                 for (auto window : windowManager->getWindows()) {
@@ -146,7 +143,9 @@ void ofApp::scheduleNextMeasure() {
         float const moves = 4;
         timeline->schedule(0, new ofxBenG::flicker(stream, blackoutLengthBeats, videoLengthBeats));
         timeline->schedule(0, playClip("flicker", "gas click 2"));
+        timeline->schedule(0, playClip("recording", "printer"));
         timeline->schedule(beatsPerMove * moves, playClip("flicker", "gas click"));
+        timeline->schedule(beatsPerMove * moves, playClip("wistful elegiac drone", "volca loop 6"));
     }
 
     timeline->schedule(4, new ofxBenG::generic_action([this]() {
