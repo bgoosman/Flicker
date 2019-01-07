@@ -38,16 +38,23 @@ public:
     ofxBenG::generic_action *playSample(ofxMaxiSample *sample);
     ofxBenG::generic_action *playClip(std::string track, std::string clip);
     ofxBenG::generic_action *stopClip(std::string track, std::string clip);
+    ofxBenG::generic_action *onMeasure();
+    ofxBenG::generic_action *setColor(ofxBenG::single_color_view *view, ofColor color);
 
     std::shared_ptr<ofAppBaseWindow> myWindow;
     ofxBenG::stream_manager *streamManager;
     ofxBenG::monitor_manager *monitorManager;
     ofxBenG::window_manager *windowManager;
     ofxBenG::timeline *timeline;
+    ofxBenG::single_color_view *lightSquare;
+    ofxBenG::single_color_view *cameraShade;
+    ofColor transparentBlack = ofColor(0, 0, 0, 200);
+    ofColor transparentWhite = ofColor(255, 255, 255, 0);
     bool stopAll = false;
 };
 
 class blackout_view : public ofxBenG::window_view {
+public:
     virtual void draw(ofPoint size) {
         ofPushStyle();
         ofSetColor(ofColor::black);

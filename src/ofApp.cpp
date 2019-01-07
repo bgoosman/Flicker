@@ -17,10 +17,15 @@ void ofApp::setup() {
     int const desiredFps = 60;
     int const defaultBufferSize = 1;
     double const beatsPerMinute = 60;
+    lightSquare = new ofxBenG::single_color_view(ofColor::black);
+    cameraShade = new ofxBenG::single_color_view(transparentWhite);
     streamManager = new ofxBenG::stream_manager(desiredWidth, desiredHeight, desiredFps, defaultBufferSize);
+    streamManager->excludeDevice("C922 Pro Stream Webcam");
     ofAddListener(streamManager->onVideoStreamAdded, this, &ofApp::onVideoStreamAdded);
     ofAddListener(streamManager->onVideoStreamRemoved, this, &ofApp::onVideoStreamRemoved);
     monitorManager = new ofxBenG::monitor_manager();
+    monitorManager->excludeMonitor("Color LCD");
+    monitorManager->excludeMonitor("BenQ GW2765");
     ofAddListener(monitorManager->onMonitorAdded, this, &ofApp::onMonitorAdded);
     ofAddListener(monitorManager->onMonitorRemoved, this, &ofApp::onMonitorRemoved);
     windowManager = new ofxBenG::window_manager();
@@ -54,7 +59,7 @@ void ofApp::audioOut(float* output, int bufferSize, int nChannels) {
 void ofApp::onVideoStreamAdded(ofxBenG::video_stream &stream) {
     std::cout << "onVideoStreamAdded stream: " << stream.getDeviceName() << std::endl;
     auto window = windowManager->getWindowWithNoStream();
-    if (window != nullptr) {
+    if (window != nullptr && window->getMonitorName() != "Optoma WXGA") {
         window->setStream(&stream);
     }
 }
@@ -66,8 +71,8 @@ void ofApp::onVideoStreamRemoved(ofxBenG::video_stream &stream) {
 void ofApp::onMonitorAdded(ofxBenG::monitor &monitor) {
     std::cout << "Monitor added: " << monitor.toString() << std::endl;
     auto window = windowManager->makeWindow(myWindow);
-    window->setStream(streamManager->getUnusedStream());
     window->setMonitor(&monitor);
+    window->setStream(streamManager->getUnusedStream());
 }
 
 void ofApp::onMonitorRemoved(ofxBenG::monitor &monitor) {
@@ -92,11 +97,14 @@ void ofApp::keyReleased(int key) {
     }
     
     if (key == 's') {
+        windowManager->getWindowForMonitor("Optoma WXGA")->addView(lightSquare);
+        windowManager->getWindowForMonitor("Optoma 1080P")->addView(cameraShade);
+
         int const measure = 8;
         timeline->scheduleNextWholeBeat(new ofxBenG::generic_action([this]() {
             ofxBenG::ableton()->setClockToZero();
             timeline->schedule(0, playClip("bros", "drier egg timer"));
-            timeline->schedule(measure, new ofxBenG::generic_action([this]() { scheduleNextMeasure(); }));
+            timeline->schedule(measure, onMeasure());
             timeline->schedule(measure * 2, playClip("hammer", "hammer on metal 2"));
             const int fiveMinutes = 60 * 5;
             timeline->schedule(fiveMinutes - measure * 2, stopClip("wistful elegiac drone", "volca loop 6"));
@@ -132,20 +140,36 @@ ofxBenG::generic_action *ofApp::stopClip(std::string track, std::string clip) {
     });
 }
 
+ofxBenG::generic_action *ofApp::onMeasure() {
+     return new ofxBenG::generic_action([this]() {
+         scheduleNextMeasure();
+     });
+}
+
+ofxBenG::generic_action *ofApp::setColor(ofxBenG::single_color_view *view, ofColor color) {
+     return new ofxBenG::generic_action([view, color]() {
+         view->setColor(color);
+     });
+}
+
 void ofApp::scheduleNextMeasure() {
     int const measure = ((int) floor(ofxBenG::ableton()->getBeat())) / 4;
-    
+
     if (measure % 4 == 0) {
         auto stream = streamManager->getStream(0);
         float const blackoutLengthBeats = 0.0025;
-        float const videoLengthBeats = 8;
         float const beatsPerMove = 2;
         float const moves = 4;
+        float const videoLengthBeats = beatsPerMove * moves;
         timeline->schedule(0, new ofxBenG::flicker(stream, blackoutLengthBeats, videoLengthBeats));
         timeline->schedule(0, playClip("flicker", "gas click 2"));
         timeline->schedule(0, playClip("recording", "printer"));
-        timeline->schedule(beatsPerMove * moves, playClip("flicker", "gas click"));
-        timeline->schedule(beatsPerMove * moves, playClip("wistful elegiac drone", "volca loop 6"));
+        timeline->schedule(0, setColor(lightSquare, ofColor::white));
+        timeline->schedule(0, setColor(cameraShade, transparentBlack));
+        timeline->schedule(videoLengthBeats, setColor(lightSquare, ofColor::black));
+        timeline->schedule(videoLengthBeats, setColor(cameraShade, transparentWhite));
+        timeline->schedule(videoLengthBeats, playClip("flicker", "gas click"));
+        timeline->schedule(videoLengthBeats, playClip("wistful elegiac drone", "volca loop 6"));
     }
 
     timeline->schedule(4, new ofxBenG::generic_action([this]() {

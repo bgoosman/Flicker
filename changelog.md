@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-Nothing at the moment
++ solid_color_view draws a square with solid background color on a window
++ window_manager::getWindowForMonitor(monitorName) selects fetches the window for a present monitor
++ Defined Optoma 1080p as default monitor for video
++ Defined Optoma WXGA as default monitor for light
++ During recording phase, video projector is faded black while light projector is unfaded.
 
 ## [1.2.0] - 2018-12-18
 ### Added
