@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 + solid_color_view draws a square with solid background color on a window
 + window_manager::getWindowForMonitor(monitorName) selects fetches the window for a present monitor
++ monitor_manager::excludeMonitor(monitorName) will prevent monitor from being added
++ stream_manager::excludeDevice(deviceName) will prevent device from being added
++ window::getMonitor()
 + Defined Optoma 1080p as default monitor for video
 + Defined Optoma WXGA as default monitor for light
-+ During recording phase, video projector is faded black while light projector is unfaded.
++ During recording phase, video projector is faded black while light projector is unfaded using the solid_color_view
++ Flicker length can vary over time, creating a rhythm of white/black and gas clicks.
 
 ## [1.2.0] - 2018-12-18
 ### Added

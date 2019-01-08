@@ -35,6 +35,7 @@ public:
     void onMonitorRemoved(ofxBenG::monitor &monitor);
     void audioOut(float *output, int bufferSize, int nChannels);
     void scheduleNextMeasure();
+    ofxBenG::generic_action *scheduleFlicker();
     ofxBenG::generic_action *playSample(ofxMaxiSample *sample);
     ofxBenG::generic_action *playClip(std::string track, std::string clip);
     ofxBenG::generic_action *stopClip(std::string track, std::string clip);
@@ -51,6 +52,8 @@ public:
     ofColor transparentBlack = ofColor(0, 0, 0, 200);
     ofColor transparentWhite = ofColor(255, 255, 255, 0);
     bool stopAll = false;
+    std::vector<int> videoLengths;
+    int videoLengthIndex;
 };
 
 class blackout_view : public ofxBenG::window_view {

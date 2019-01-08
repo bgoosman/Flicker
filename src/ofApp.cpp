@@ -24,14 +24,24 @@ void ofApp::setup() {
     ofAddListener(streamManager->onVideoStreamAdded, this, &ofApp::onVideoStreamAdded);
     ofAddListener(streamManager->onVideoStreamRemoved, this, &ofApp::onVideoStreamRemoved);
     monitorManager = new ofxBenG::monitor_manager();
-    monitorManager->excludeMonitor("Color LCD");
-    monitorManager->excludeMonitor("BenQ GW2765");
+//    monitorManager->excludeMonitor("Color LCD");
+//    monitorManager->excludeMonitor("BenQ GW2765");
     ofAddListener(monitorManager->onMonitorAdded, this, &ofApp::onMonitorAdded);
     ofAddListener(monitorManager->onMonitorRemoved, this, &ofApp::onMonitorRemoved);
     windowManager = new ofxBenG::window_manager();
+    windowManager->setFullscreen(false);
     ofxBenG::ableton()->setup(beatsPerMinute, 8.0);
     timeline = new ofxBenG::timeline(4);
     ofxBenG::ableton()->stopAll();
+    videoLengths.push_back(8);
+    videoLengths.push_back(4);
+    videoLengths.push_back(2);
+    videoLengths.push_back(2);
+    videoLengths.push_back(1);
+    videoLengths.push_back(1);
+    videoLengths.push_back(2);
+    videoLengths.push_back(2);
+    videoLengths.push_back(4);
 }
 
 void ofApp::update() {
@@ -97,21 +107,27 @@ void ofApp::keyReleased(int key) {
     }
     
     if (key == 's') {
-        windowManager->getWindowForMonitor("Optoma WXGA")->addView(lightSquare);
-        windowManager->getWindowForMonitor("Optoma 1080P")->addView(cameraShade);
+//        windowManager->getWindowForMonitor("Optoma WXGA")->addView(lightSquare);
+//        windowManager->getWindowForMonitor("Optoma 1080P")->addView(cameraShade);
+        windowManager->getWindowForMonitor("Color LCD")->addView(lightSquare);
+        windowManager->getWindowForMonitor("BenQ GW2765")->addView(cameraShade);
 
+        videoLengthIndex = 0;
         int const measure = 8;
         timeline->scheduleNextWholeBeat(new ofxBenG::generic_action([this]() {
             ofxBenG::ableton()->setClockToZero();
             timeline->schedule(0, playClip("bros", "drier egg timer"));
+            timeline->schedule(0, playClip("wistful elegiac drone", "volca loop 6"));
             timeline->schedule(measure, onMeasure());
+            timeline->schedule(measure, scheduleFlicker());
             timeline->schedule(measure * 2, playClip("hammer", "hammer on metal 2"));
             const int fiveMinutes = 60 * 5;
             timeline->schedule(fiveMinutes - measure * 2, stopClip("wistful elegiac drone", "volca loop 6"));
             timeline->schedule(fiveMinutes - measure, stopClip("hammer", "hammer on metal 2"));
-            timeline->schedule(fiveMinutes, stopClip("bros", "drier egg timer"));
+            timeline->schedule(fiveMinutes - 1, stopClip("bros", "drier egg timer"));
             timeline->schedule(fiveMinutes - 1, new ofxBenG::generic_action([this]() {
                 stopAll = true;
+                timeline->clearScheduledActions();
                 for (auto window : windowManager->getWindows()) {
                     window->addView(new blackout_view());
                 }
@@ -128,14 +144,14 @@ ofxBenG::generic_action *ofApp::playSample(ofxMaxiSample *sample) {
 
 ofxBenG::generic_action *ofApp::playClip(std::string track, std::string clip) {
     return new ofxBenG::generic_action([track, clip]() {
-        std::cout << ofxBenG::ableton()->getBeat() << " playClip " << track << " - " << clip << std::endl;
+//        std::cout << ofxBenG::ableton()->getBeat() << " playClip " << track << " - " << clip << std::endl;
         ofxBenG::ableton()->playClip(track, clip);
     });
 }
 
 ofxBenG::generic_action *ofApp::stopClip(std::string track, std::string clip) {
     return new ofxBenG::generic_action([track, clip]() {
-        std::cout << ofxBenG::ableton()->getBeat() << " stopClip " << track << " - " << clip << std::endl;
+//        std::cout << ofxBenG::ableton()->getBeat() << " stopClip " << track << " - " << clip << std::endl;
         ofxBenG::ableton()->stopClip(track, clip);
     });
 }
@@ -148,29 +164,35 @@ ofxBenG::generic_action *ofApp::onMeasure() {
 
 ofxBenG::generic_action *ofApp::setColor(ofxBenG::single_color_view *view, ofColor color) {
      return new ofxBenG::generic_action([view, color]() {
+//         std::cout << ofxBenG::ableton()->getBeat() << " setColor " << color << std::endl;
          view->setColor(color);
      });
 }
 
+ofxBenG::generic_action *ofApp::scheduleFlicker() {
+    return new ofxBenG::generic_action([this]() {
+        if (!stopAll) {
+            auto stream = streamManager->getStream(0);
+            float const blackoutLengthBeats = 0.0025;
+            float const videoLengthBeats = videoLengths[videoLengthIndex++];
+            if (videoLengthIndex == videoLengths.size())
+                videoLengthIndex = 0;
+            timeline->schedule(0.0f, new ofxBenG::flicker(stream, blackoutLengthBeats, videoLengthBeats));
+            timeline->schedule(0.0f, playClip("flicker", "gas click 2"));
+//        timeline->schedule(0.0, playClip("recording", "printer"));
+            timeline->schedule(0.0f, setColor(lightSquare, ofColor::white));
+            timeline->schedule(0.0f, setColor(cameraShade, transparentBlack));
+            timeline->schedule(videoLengthBeats, setColor(lightSquare, ofColor::black));
+            timeline->schedule(videoLengthBeats, setColor(cameraShade, transparentWhite));
+//        timeline->schedule(videoLengthBeats, stopClip("recording", "printer"));
+            timeline->schedule(videoLengthBeats, playClip("flicker", "gas click"));
+            timeline->schedule(videoLengthBeats * 2, scheduleFlicker());
+        }
+    });
+}
+
 void ofApp::scheduleNextMeasure() {
     int const measure = ((int) floor(ofxBenG::ableton()->getBeat())) / 4;
-
-    if (measure % 4 == 0) {
-        auto stream = streamManager->getStream(0);
-        float const blackoutLengthBeats = 0.0025;
-        float const beatsPerMove = 2;
-        float const moves = 4;
-        float const videoLengthBeats = beatsPerMove * moves;
-        timeline->schedule(0, new ofxBenG::flicker(stream, blackoutLengthBeats, videoLengthBeats));
-        timeline->schedule(0, playClip("flicker", "gas click 2"));
-        timeline->schedule(0, playClip("recording", "printer"));
-        timeline->schedule(0, setColor(lightSquare, ofColor::white));
-        timeline->schedule(0, setColor(cameraShade, transparentBlack));
-        timeline->schedule(videoLengthBeats, setColor(lightSquare, ofColor::black));
-        timeline->schedule(videoLengthBeats, setColor(cameraShade, transparentWhite));
-        timeline->schedule(videoLengthBeats, playClip("flicker", "gas click"));
-        timeline->schedule(videoLengthBeats, playClip("wistful elegiac drone", "volca loop 6"));
-    }
 
     timeline->schedule(4, new ofxBenG::generic_action([this]() {
         if (!stopAll) scheduleNextMeasure();
