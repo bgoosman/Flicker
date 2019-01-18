@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Camera previews on app window
+- Availibility of required Ableton clips  on app window
+- Number of Ableton Link peers on app window
+- Names of connected monitors on app window
+- Go button starts the performance, and a green background indicates running
 
 ## [1.3.0] - 2019-01-07
 ### Added

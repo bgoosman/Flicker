@@ -3,6 +3,7 @@ ofxAbletonLive
 ofxBenG
 ofxBlackmagic
 ofxEasing
+ofxGui
 ofxIntersection
 ofxKinect
 ofxMaxim
