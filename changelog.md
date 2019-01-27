@@ -5,11 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Nothing at the moment
+
+## [1.4.0] - 2019-1-21
+### Added
 - Camera previews on app window
-- Availibility of required Ableton clips  on app window
 - Number of Ableton Link peers on app window
 - Names of connected monitors on app window
-- Go button starts the performance, and a green background indicates running
+- Go button starts the performance, and a colored background indicates running
+- Set levels on ETC Element lightboard via MIDI
+- Execute a function for all linearly interpolated values of a range in a set number of beats
+- Media
+   - [performance](https://www.dropbox.com/s/tniv8zyec0jc3de/IMG_2768.mov?dl=0)
+   - [rehearsal](https://www.dropbox.com/sh/ykcqou1ojxk7l1m/AABV4-qVop_dipSbKFXg7Obqa?dl=0)
+   - [images](https://www.dropbox.com/sh/84pf8ghbpi7nld4/AACKp6Tk1vpWRHz0mNgy3Cj8a?dl=0)
 
 ## [1.3.0] - 2019-01-07
 ### Added
@@ -22,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Defined Optoma WXGA as default monitor for light
 - During recording phase, video projector is faded black while light projector is unfaded using the solid_color_view
 - Flicker length can vary over time, creating a rhythm of white/black and gas clicks.
-- media
+- Media
    - [performance](https://www.dropbox.com/sh/kavy5i113q0f0qa/AABDZlJ9aIg6h-DCGEtqdB5Ia?dl=0)
    - [rehearsal](https://www.dropbox.com/sh/ro03mfzacmmjoeu/AACyHA4E6OudOhF54bC11-Mha?dl=0)
    - [images](https://www.dropbox.com/sh/h96nfvk4u1yw9ih/AAAg8KZ4s6Piz8TEfTFe737Za?dl=0)

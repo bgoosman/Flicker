@@ -40,6 +40,7 @@ public:
     void audioOut(float *output, int bufferSize, int nChannels);
     void scheduleNextMeasure();
     void armFaderPressed();
+    void testButtonPressed();
     void startPerformance();
     void onLfo1Value(float &value);
     void onLfo2Value(float &value);
@@ -50,11 +51,15 @@ public:
     ofxBenG::generic_action *onMeasure();
     ofxBenG::generic_action *setColor(ofxBenG::single_color_view *view, ofColor color);
     ofxBenG::generic_action *setSubmaster(int faderNumber, int percent);
+    ofxBenG::lerp_action *fadeLight(int faderNumber, float durationBeats, float startLevel, float endLevel);
+    ofxBenG::lerp_action *fadeVolume(ofxAbletonLiveTrack *track, float durationBeats, float startLevel, float endLevel);
+    ofxBenG::lerp_action *fadeParameter(ofxAbletonLiveParameter *parameter, float durationBeats, float startLevel, float endLevel);
 
     ofxFloatSlider faderLevel;
     ofxIntSlider faderNumber;
     ofxFloatSlider lfoFrequency;
     ofxButton armFader;
+    ofxButton testButton;
     ofxButton goButton;
     ofxPanel gui;
 
@@ -72,18 +77,34 @@ public:
     ofColor transparentWhite = ofColor(255, 255, 255, 0);
     std::vector<int> videoLengths;
     std::vector<ofxBenG::header_view*> cameraPreviews;
-    int videoLengthIndex;
-    int beatsInMeasure;
+    int videoLengthIndex = 0;
+    int beatsInMeasure = 8;
     bool stopAll = false;
     bool isRunning = false;
-    float lightMin;
-    float lightMax;
-    float periodInBeats;
-    float fadingInBeats;
-    float fadingOutBeats;
-    float recordingBeats;
-    float blackoutBeats;
-    ofxBenG::flicker *lastFlicker;
+    float lightMin = 0;
+    float lightMax = 100;
+    float volumeOff = 0.0;
+    float volumeMin = 0.5;
+    float volumeMax = 0.75;
+    float recordingBeats = 8;
+    float fadeInBeats = 3;
+    float fadeOutBeats = 2;
+    int const frontFaderNumber = 37;
+    int const houseFaderNumber = 38;
+    int const sideFaderNumber = 39;
+    int const backFaderNumber = 40;
+    int frontMax = 81;
+    int sideMax = 25;
+    int backMax = 15;
+    float const filterMin = 30;
+    float const filterMax = 80;
+
+    ofxBenG::video_stream *stream = nullptr;
+    ofxPm::VideoBuffer *buffer = nullptr;
+    ofxPm::VideoHeader *header = nullptr;
+    ofxPm::BasicVideoRenderer *renderer = nullptr;
+    ofTexture *holdFrame = nullptr;
+    float recordingFps;
 };
 
 class blackout_view : public ofxBenG::window_view {
