@@ -1,2 +1,5 @@
 .DS_Store
 *.swp
+/bin/FlickerDebug.app/Contents/MacOS/FlickerDebug
+/Flicker.xcodeproj/xcuserdata/admin.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+/Flicker.xcodeproj/project.xcworkspace/xcuserdata/admin.xcuserdatad/UserInterfaceState.xcuserstate

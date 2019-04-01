@@ -45,6 +45,8 @@ public:
     ofxBenG::generic_action *muteAll();
     ofxBenG::generic_action *blackout();
     ofxBenG::generic_action *fadeLights(float durationBeats, int start, int end);
+    ofxBenG::generic_action *fadeLights(std::vector<int> channels, float durationBeats, int start, int end);
+    ofxBenG::generic_action *executeTransition0();
     ofxBenG::generic_action *executeTransition1();
     ofxBenG::generic_action *executeTransition2();
     ofxBenG::generic_action *executeTransition3();
@@ -56,6 +58,7 @@ public:
     ofxBenG::generic_action *setColor(ofxBenG::single_color_view *view, ofColor color);
     ofxBenG::generic_action *setSubmaster(int faderNumber, int percent);
     ofxBenG::generic_action *setChannel(int faderNumber, int percent);
+    ofxBenG::generic_action *flickerLight(int channel, float duration);
     ofxBenG::lerp_action *fadeLight(int faderNumber, float durationBeats, int startLevel, int endLevel);
     ofxBenG::lerp_action *fadeVolume(ofxAbletonLiveTrack *track, float durationBeats, float startLevel, float endLevel);
     ofxBenG::lerp_action *fadeParameter(ofxAbletonLiveParameter *parameter, float durationBeats, float startLevel, float endLevel);
@@ -70,6 +73,17 @@ public:
     std::string lightBoardIp = "169.254.1.42";
     int lightBoardPort = 3000;
     std::vector<int> lights{5, 12, 13, 14, 16, 17, 25};
+    ofPoint channelRange = {0, 120};
+    std::vector<int> sideRight{11, 12, 13, 14};
+    std::vector<int> sideLeft{15, 16, 17, 18};
+    std::vector<int> backs{25};
+    std::vector<int> fronts{1, 2, 3};
+    std::vector<int> allLightsUsed{2, 11, 12, 15, 16, 25};
+    std::vector<int> allLightsUsedExceptChannelTwo{11, 12, 15, 16, 25};
+    std::vector<int> houseLights{1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 22};
+    float const lightMin = 0;
+    float const lightNormal = 75;
+    float const lightMax = 100;
     
     // Video
     ofxBenG::video_stream *stream = nullptr;
@@ -89,9 +103,6 @@ public:
     int beatsInBar = 4;
     bool stopAll = false;
     bool isRunning = false;
-    float const lightMin = 0;
-    float const lightNormal = 75;
-    float const lightMax = 100;
     float const volumeOff = 0.0;
     float const volumeMin = 0.5;
     float const volumeMax = 0.75;

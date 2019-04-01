@@ -133,6 +133,16 @@ void ofApp::onMonitorRemoved(ofxBenG::monitor &monitor) {
 void ofApp::startPerformance() {
     isRunning = true;
     timeline->scheduleNextWholeBeat(new ofxBenG::generic_action([this]() {
+        timeline->executeAction(stopClip("muffle", "fumbling around"));
+        timeline->executeAction(stopClip("piano treble drone", "piano treble drone 1"));
+        timeline->executeAction(stopClip("guitar", "guitar 2"));
+        timeline->executeAction(stopClip("grand piano", "1"));
+        timeline->executeAction(stopClip("grand piano", "2"));
+        timeline->executeAction(stopClip("grand piano", "3"));
+        timeline->executeAction(stopClip("grand piano", "4"));
+        timeline->executeAction(stopClip("piano bass drone", "piano bass drone 1"));
+        timeline->executeAction(stopClip("guitar drone", "guitar drone uplifting"));
+        timeline->executeAction(stopClip("violin", "violin forward"));
         ofxBenG::ableton()->setClockToZero();
         ofxBenG::ableton()->play();
         ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency")->setValue(135);
@@ -141,14 +151,14 @@ void ofApp::startPerformance() {
         ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->getParameter("Freeze")->setValue(0);
         ofxBenG::ableton()->getTrack("guitar drones")->setVolume(0);
         ofxBenG::ableton()->getTrack("guitar drones")->setMute(false);
+        timeline->executeAction(blackout());
         timeline->executeAction(playClip("muffle", "fumbling around"));
-        timeline->executeAction(playClip("piano bass drone", "piano bass drone 1"));
-        timeline->executeAction(playClip("guitar", "guitar 2"));
-        timeline->executeAction(fadeLights(0.5, lightNormal, lightMin));
-        timeline->schedule(1.0, fadeLights(60.0, lightMin, lightMax));
+        timeline->executeAction(playClip("grand piano", "1"));
+        timeline->scheduleOnNthBeatFromNow(1, fadeLights(60.0, lightMin, lightMax));
+        timeline->scheduleOnNthBeatFromNow(1, playClip("guitar drones", "guitar drone uplifting"));
+        timeline->scheduleOnNthBeatFromNow(1, fadeVolume(ofxBenG::ableton()->getTrack("guitar drones"), 60, 0, 0.7));
         timeline->scheduleOnNthBeatFromNow(30, playClip("piano treble drone", "piano treble drone 1"));
-        timeline->scheduleOnNthBeatFromNow(61, playClip("guitar drones", "guitar drone uplifting"));
-        timeline->scheduleOnNthBeatFromNow(61, fadeVolume(ofxBenG::ableton()->getTrack("guitar drones"), 8, 0, 0.7));
+        timeline->scheduleOnNthBeatFromNow(1 * 60, executeTransition0());
         timeline->scheduleOnNthBeatFromNow(2 * 60, executeTransition1());
         timeline->scheduleOnNthBeatFromNow(3 * 60, executeTransition2());
         timeline->scheduleOnNthBeatFromNow(4 * 60, executeTransition3());
@@ -164,137 +174,105 @@ ofxBenG::generic_action *ofApp::muteAll() {
 
 ofxBenG::generic_action *ofApp::blackout() {
     return new ofxBenG::generic_action([this]() {
-        for (int i = 0; i < lights.size(); i++) {
-            lightBoard.setChannel(lights[i], 0);
+        for (int i = channelRange[0]; i < channelRange[1]; i++) {
+            lightBoard.setChannel(i, 0);
         }
+    });
+}
+
+ofxBenG::generic_action *ofApp::flickerLight(int channel, float duration) {
+    return new ofxBenG::generic_action([this, channel, duration]() {
+        timeline->executeAction(setChannel(channel, lightMax));
+        timeline->schedule(duration, setChannel(channel, lightMin));
+    });
+}
+
+ofxBenG::generic_action *ofApp::executeTransition0() {
+    return new ofxBenG::generic_action([this]() {
+        timeline->executeAction(playClip("grand piano", "2"));
     });
 }
 
 ofxBenG::generic_action *ofApp::executeTransition1() {
     return new ofxBenG::generic_action([this]() {
-        int const sideRightClose = 12;
-        int const sideRightFar = 13;
-        int const sideRightBack = 14;
-        int const sideLeftClose = 16;
-        int const sideLeftFar = 17;
-        int const back = 25;
         auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
         timeline->executeAction(fadeParameter(frequency, 1.0, filterMax, filterMin));
-        ofxBenG::ableton()->getTrack("violin")->getDevice("Simple Delay")->setEnabled(true);
-        timeline->executeAction(playClip("violin", "violin forward"));
-        timeline->schedule(0.5, fadeLight(sideRightClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideRightFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(back, 0.5, 75, 0));
-        timeline->schedule(1.5, setChannel(sideRightFar, 100));
-        timeline->schedule(1.8, setChannel(sideRightFar, 0));
+        timeline->executeAction(playClip("guitar", "guitar 2"));
+        timeline->executeAction(playClip("piano bass drone", "piano bass drone 1"));
+        timeline->executeAction(playClip("grand piano", "3"));
+        timeline->schedule(0.5, fadeLights(allLightsUsed, 0.5, lightNormal, lightMin));
+        timeline->schedule(1.5, flickerLight(sideRight[1], 0.3));
+        timeline->scheduleOnNthBeatFromNow(4, fadeLights(allLightsUsed, 2, lightMin, lightNormal));
         timeline->scheduleOnNthBeatFromNow(4, fadeParameter(frequency, 2, filterMin, filterMax));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideRightClose, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideRightFar, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideLeftClose, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideLeftFar, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(back, 2, 0, 75));
     });
 }
 
 ofxBenG::generic_action *ofApp::executeTransition2() {
     return new ofxBenG::generic_action([this]() {
-        int const sideRightClose = 12;
-        int const sideRightFar = 13;
-        int const sideRightBack = 14;
-        int const sideLeftClose = 16;
-        int const sideLeftFar = 17;
-        int const back = 25;
         auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
         timeline->executeAction(fadeParameter(frequency, 1.0, filterMax, filterMin));
-        ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->setEnabled(true);
-        timeline->executeAction(playClip("grand piano", "1"));
-        timeline->schedule(0.5, fadeLight(sideRightClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideRightFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(back, 0.5, 75, 0));
-        timeline->schedule(1.5, setChannel(sideRightFar, 100));
-        timeline->schedule(1.8, setChannel(sideRightFar, 0));
+        timeline->executeAction(playClip("grand piano", "4"));
+        timeline->schedule(0.5, fadeLights(allLightsUsed, 0.5, lightNormal, lightMin));
+        timeline->schedule(1.5, flickerLight(sideRight[1], 0.3));
+        timeline->scheduleOnNthBeatFromNow(4, fadeLights(allLightsUsed, 2, lightMin, lightNormal));
         timeline->scheduleOnNthBeatFromNow(4, fadeParameter(frequency, 2, filterMin, filterMax));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideRightClose, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideRightFar, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideLeftClose, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideLeftFar, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(back, 2, 0, 75));
     });
 }
 
 ofxBenG::generic_action *ofApp::executeTransition3() {
     return new ofxBenG::generic_action([this]() {
-        int const sideRightClose = 12;
-        int const sideRightFar = 13;
-        int const sideRightBack = 14;
-        int const sideLeftClose = 16;
-        int const sideLeftFar = 17;
-        int const back = 25;
         auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
         timeline->executeAction(fadeParameter(frequency, 1.0, filterMax, filterMin));
+        timeline->executeAction(playClip("grand piano", "5"));
+        timeline->executeAction(playClip("violin", "violin forward"));
+        timeline->schedule(3.0, new ofxBenG::generic_action([this]() {
+            ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->setEnabled(true);
+            ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->getParameter("Freeze")->setValue(1);
+        }));
+        timeline->schedule(0.5, fadeLights(allLightsUsed, 0.5, lightNormal, lightMin));
         timeline->schedule(1.0, new ofxBenG::generic_action([this] {ofxBenG::ableton()->getTrack("guitar drones")->setMute(true);}));
-        ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->getParameter("Freeze")->setValue(1);
-        timeline->schedule(0.5, fadeLight(sideRightClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideRightFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(back, 0.5, 75, 0));
-        timeline->schedule(1.5, setChannel(sideRightFar, 100));
-        timeline->schedule(1.8, setChannel(sideRightFar, 0));
+        timeline->schedule(1.5, flickerLight(sideRight[1], 0.3));
+        timeline->scheduleOnNthBeatFromNow(4, fadeLights(allLightsUsed, 2, lightMin, lightNormal));
         timeline->scheduleOnNthBeatFromNow(4, fadeParameter(frequency, 2, filterMin, filterMax));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideRightClose, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideRightFar, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideLeftClose, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(sideLeftFar, 2, 0, 75));
-        timeline->scheduleOnNthBeatFromNow(4, fadeLight(back, 2, 0, 75));
+        timeline->scheduleOnNthBeatFromNow(6, fadeLights(allLightsUsedExceptChannelTwo, 42, lightNormal, lightMin));
+        timeline->scheduleOnNthBeatFromNow(48, fadeLight(2, 12, lightNormal, lightMin));
+        timeline->scheduleOnNthBeatFromNow(48, fadeParameter(frequency, 8, filterMax, 0));
     });
 }
 
 ofxBenG::generic_action *ofApp::executeTransition4() {
     return new ofxBenG::generic_action([this]() {
-        int const sideRightClose = 12;
-        int const sideRightFar = 13;
-        int const sideRightBack = 14;
-        int const sideLeftClose = 16;
-        int const sideLeftFar = 17;
-        int const back = 25;
-        auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
-        timeline->executeAction(fadeParameter(frequency, 1.0, filterMax, filterMin));
-        timeline->schedule(0.5, fadeLight(sideRightClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideRightFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftClose, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(sideLeftFar, 0.5, 75, 0));
-        timeline->schedule(0.5, fadeLight(back, 0.5, 75, 0));
-        timeline->schedule(1.5, setChannel(sideRightFar, 100));
-        timeline->schedule(3.0, setChannel(sideRightFar, 0));
         timeline->scheduleOnNthBeatFromNow(6, new ofxBenG::generic_action([this]() {
             stopAll = true;
             ofxBenG::ableton()->stopAll();
             timeline->clearScheduledActions();
-            auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
-            timeline->executeAction(fadeParameter(frequency, 1.0, filterMin, 0));
-            timeline->schedule(4.0, fadeLights(2.0, 0, 75));
+            timeline->schedule(4.0, fadeLights(houseLights, 2.0, lightMin, lightNormal));
         }));
     });
 }
 
 void ofApp::testButtonPressed() {
     testLights();
+    timeline->executeAction(playClip("test", "1"));
 }
 
 void ofApp::testLights() {
-    timeline->executeAction(blackout());
-    timeline->executeAction(fadeLights(3.0, 0, 75));
+    timeline->executeAction(fadeLights(5.0, lightNormal, lightMin));
+    timeline->executeAction(fadeLights(5.0, lightMin, lightNormal));
 }
 
 ofxBenG::generic_action *ofApp::fadeLights(float durationBeats, int start, int end) {
     return new ofxBenG::generic_action([this, durationBeats, start, end]() {
-        for (int i = 0; i < lights.size(); i++) {
-            timeline->executeAction(fadeLight(lights[i], durationBeats, start, end));
+        for (int i = 0; i < allLightsUsed.size(); i++) {
+            timeline->executeAction(fadeLight(allLightsUsed[i], durationBeats, start, end));
+        }
+    });
+}
+
+ofxBenG::generic_action *ofApp::fadeLights(std::vector<int> channels, float durationBeats, int start, int end) {
+    return new ofxBenG::generic_action([this, channels, durationBeats, start, end]() {
+        for (int i = 0; i < channels.size(); i++) {
+            timeline->executeAction(fadeLight(channels[i], durationBeats, start, end));
         }
     });
 }
