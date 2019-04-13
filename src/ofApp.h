@@ -14,6 +14,14 @@
 #include <functional>
 #include <algorithm>
 
+#define TO_SECONDS(x) ((float)(x) / (float)1e6)
+
+#define PROMISE(action) \
+new ofxBenG::generic_action([&]() {\
+std::cout << #action << std::endl\
+action;\
+}
+
 class ofApp : public ofBaseApp {
 public:
     ofApp(std::shared_ptr<ofAppBaseWindow> mainWindow);
@@ -40,32 +48,164 @@ public:
     void onMonitorRemoved(ofxBenG::monitor &monitor);
     void audioOut(float *output, int bufferSize, int nChannels);
     void testButtonPressed();
+    void testButton2Pressed();
     void startPerformance();
-    void testLights();
-    ofxBenG::generic_action *muteAll();
-    ofxBenG::generic_action *blackout();
-    ofxBenG::generic_action *fadeLights(float durationBeats, int start, int end);
-    ofxBenG::generic_action *fadeLights(std::vector<int> channels, float durationBeats, int start, int end);
-    ofxBenG::generic_action *executeTransition0();
-    ofxBenG::generic_action *executeTransition1();
-    ofxBenG::generic_action *executeTransition2();
-    ofxBenG::generic_action *executeTransition3();
-    ofxBenG::generic_action *executeTransition4();
-    ofxBenG::generic_action *playSample(ofxMaxiSample *sample);
-    ofxBenG::generic_action *playClip(std::string track, std::string clip);
-    ofxBenG::generic_action *playClip(ofxAbletonLiveClip *clip);
-    ofxBenG::generic_action *stopClip(std::string track, std::string clip);
-    ofxBenG::generic_action *setColor(ofxBenG::single_color_view *view, ofColor color);
-    ofxBenG::generic_action *setSubmaster(int faderNumber, int percent);
-    ofxBenG::generic_action *setChannel(int faderNumber, int percent);
-    ofxBenG::generic_action *flickerLight(int channel, float duration);
-    ofxBenG::lerp_action *fadeLight(int faderNumber, float durationBeats, int startLevel, int endLevel);
-    ofxBenG::lerp_action *fadeVolume(ofxAbletonLiveTrack *track, float durationBeats, float startLevel, float endLevel);
-    ofxBenG::lerp_action *fadeParameter(ofxAbletonLiveParameter *parameter, float durationBeats, float startLevel, float endLevel);
+    void onBlackoutButtonPressed();
+    
+    void muteAll() {
+        ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency")->setValue(20);
+    }
+    
+    void blackout() {
+        for (int i = channelRange[0]; i < channelRange[1]; i++) {
+            lightBoard.setChannel(i, 0);
+        }
+    }
+    
+    void fadeLights(float durationBeats, int start, int end) {
+        for (int i = 0; i < allLightsUsed.size(); i++) {
+            timeline->cue(fadeLight(allLightsUsed[i], seconds, start, end));
+        }
+    }
+    
+    void fadeLights(std::vector<int> channels, float durationBeats, int start, int end) {
+        for (int i = 0; i < channels.size(); i++) {
+            timeline->cue(fadeLight(channels[i], seconds, start, end));
+        }
+    }
+    
+    void executeTransition0() {
+        timeline->cue(playClip("grand piano", "2"));
+    }
+    
+    void executeTransition1() {
+        auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
+        timeline->cue(fadeParameter(frequency, 1.0, filterMax, filterMin));
+        timeline->cue(PROMISE(playClip("guitar", "guitar 2")));
+        timeline->cue(PROMISE(playClip("piano bass drone", "piano bass drone 1")));
+        timeline->cue(PROMISE(playClip("grand piano", "3")));
+        timeline->cueInSeconds(0.5, fadeLights(allLightsUsed, 0.5, lightNormal, lightMin));
+        timeline->cueInSeconds(1.5, PROMISE(flickerLight(sideRight[1], 0.3)));
+        timeline->cueInSeconds(4, fadeLights(allLightsUsed, 2, lightMin, lightNormal));
+        timeline->cueInSeconds(4, fadeParameter(frequency, 2, filterMin, filterMax));
+    }
+    
+    void executeTransition2() {
+        auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
+        timeline->cue(fadeParameter(frequency, 1.0, filterMax, filterMin));
+        timeline->cue(playClip("grand piano", "4"));
+        timeline->cueInSeconds(0.5, fadeLights(allLightsUsed, 0.5, lightNormal, lightMin));
+        timeline->cueInSeconds(1.5, flickerLight(sideRight[1], 0.3));
+        timeline->cueInSeconds(4, fadeLights(allLightsUsed, 2, lightMin, lightNormal));
+        timeline->cueInSeconds(4, fadeParameter(frequency, 2, filterMin, filterMax));
+    }
+    
+    void executeTransition3() {
+        auto frequency = ofxBenG::ableton()->getMasterTrack()->getDevice("Auto Filter")->getParameter("Frequency");
+        timeline->cue(fadeParameter(frequency, 1.0, filterMax, filterMin));
+        timeline->cue(playClip("grand piano", "5"));
+        timeline->cue(playClip("violin", "violin forward"));
+        timeline->cueInSeconds(3.0, new ofxBenG::generic_action([this]() {
+            ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->setEnabled(true);
+            ofxBenG::ableton()->getTrack("violin")->getDevice("Ping Pong Delay")->getParameter("Freeze")->setValue(1);
+        }));
+        timeline->cueInSeconds(0.5, fadeLights(allLightsUsed, 0.5, lightNormal, lightMin));
+        timeline->cueInSeconds(1.0, PROMISE(ofxBenG::ableton()->getTrack("guitar drones")->setMute(true)));
+        timeline->cueInSeconds(1.5, flickerLight(sideRight[1], 0.3));
+        timeline->cueInSeconds(4, fadeLights(allLightsUsed, 2, lightMin, lightNormal));
+        timeline->cueInSeconds(4, fadeParameter(frequency, 2, filterMin, filterMax));
+        timeline->cueInSeconds(6, fadeLights(allLightsUsedExceptChannelTwo, 42, lightNormal, lightMin));
+        timeline->cueInSeconds(48, fadeLight(2, 12, lightNormal, lightMin));
+        timeline->cueInSeconds(48, fadeParameter(frequency, 8, filterMax, 0));
+    }
+    
+    void executeTransition4() {
+        timeline->cueInSeconds(6, new ofxBenG::generic_action([this]() {
+            ofxBenG::ableton()->stopAll();
+            timeline->clearScheduledActions();
+            timeline->cueInSeconds(4.0, fadeLights(houseLights, 2.0, lightMin, lightNormal));
+        }));
+    }
+
+    void playSample(ofxMaxiSample *sample) {
+        ofxBenG::audio::getInstance()->playSample(sample);
+    }
+
+    void playClip(std::string track, std::string clip) {
+        ofxBenG::ableton()->playClip(track, clip);
+    }
+
+    void playClip(ofxAbletonLiveClip *clip) {
+        clip->play();
+    }
+    
+    void stopClip(std::string track, std::string clip) {
+        ofxBenG::ableton()->stopClip(track, clip);
+    }
+    
+    void setColor(ofxBenG::single_color_view *view, ofColor color) {
+        view->setColor(color);
+    }
+    
+    void setSubmaster(int faderNumber, int percent) {
+        lightBoard.setSubmaster(faderNumber, percent);
+    }
+    
+    void setChannel(int faderNumber, int percent) {
+        lightBoard.setChannel(faderNumber, percent);
+    }
+    
+    void flickerLight(int channel, float duration) {
+        timeline->cue(PROMISE(setChannel(channel, lightMax)));
+        timeline->cueInSeconds(duration, PROMISE(setChannel(channel, lightMin)));
+    }
+    
+    void aroundTheWorld() {
+        aroundTheWorldRunning = true;
+        
+        for (int i = 0; i < aroundTheWorldLights.size(); i++) {
+            int const channel = aroundTheWorldLights[i];
+            timeline->cueInSeconds(i * fadeInTime, fadeLight(channel, fadeInTime, lightMin, lightMax));
+            timeline->cueInSeconds(i * fadeInTime + fadeInTime, fadeLight(channel, fadeOutTime, lightMax, lightMin));
+        }
+       
+        timeline->cueInSeconds(fadeInTime * aroundTheWorldLights.size(), new ofxBenG::generic_action([&]() {
+            if (aroundTheWorldRunning) timeline->cue(PROMISE(aroundTheWorld()));
+        }));
+    }
+
+    ofxBenG::lerp_action *fadeLight(int faderNumber, float seconds, int startLevel, int endLevel) {
+        return new ofxBenG::lerp_action(seconds, [=](float lerpValue, float min, float max) {
+            int const faderLevel = (int)ofMap(lerpValue, min, max, (float)startLevel, (float)endLevel);
+            lightBoard.setChannel(faderNumber, faderLevel);
+        });
+    }
+    
+    ofxBenG::lerp_action *fadeVolume(ofxAbletonLiveTrack *track, float seconds, float startLevel, float endLevel) {
+        return new ofxBenG::lerp_action(seconds, [=](float lerpValue, float min, float max) {
+            track->setVolume(ofMap(lerpValue, min, max, startLevel, endLevel));
+        });
+    }
+    
+    ofxBenG::lerp_action *fadeParameter(ofxAbletonLiveParameter *parameter, float seconds, float startLevel, float endLevel) {
+        return new ofxBenG::lerp_action(seconds, [=](float lerpValue, float min, float max) {
+            float newFrequency = ofMap(lerpValue, min, max, startLevel, endLevel);
+            parameter->setValue(newFrequency);
+        });
+    }
 
     // GUI
     ofxButton testButton;
+    ofxButton testButton2;
+    ofxButton blackoutButton;
     ofxButton goButton;
+    ofParameter<float> fadeOutTime;
+    ofParameter<float> fadeInTime;
+    ofParameter<float> fadeInPreTime;
+    ofParameter<bool> aroundTheWorldRunning;
+    ofParameter<float> lightMin;
+    ofParameter<float> lightMax;
+    ofParameterGroup parameters;
     ofxPanel gui;
 
     // Lights
@@ -81,10 +221,9 @@ public:
     std::vector<int> allLightsUsed{2, 11, 12, 15, 16, 25};
     std::vector<int> allLightsUsedExceptChannelTwo{11, 12, 15, 16, 25};
     std::vector<int> houseLights{1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 22};
-    float const lightMin = 0;
+    std::vector<int> aroundTheWorldLights = {25, 12, 5, 16};
     float const lightNormal = 75;
-    float const lightMax = 100;
-    
+
     // Video
     ofxBenG::video_stream *stream = nullptr;
     ofxPm::VideoBuffer *buffer = nullptr;
@@ -92,6 +231,14 @@ public:
     ofxPm::BasicVideoRenderer *renderer = nullptr;
     ofTexture *holdFrame = nullptr;
     float recordingFps;
+    
+    // Audio
+    int const beatsInBar = 4;
+    float const volumeOff = 0.0;
+    float const volumeMin = 0.5;
+    float const volumeMax = 0.75;
+    float const filterMin = 60;
+    float const filterMax = 135;
 
     // App
     std::shared_ptr<ofAppBaseWindow> myWindow;
@@ -100,21 +247,9 @@ public:
     ofxBenG::window_manager *windowManager;
     ofxBenG::timeline *timeline;
     std::vector<ofxBenG::header_view*> cameraPreviews;
-    int beatsInBar = 4;
-    bool stopAll = false;
     bool isRunning = false;
-    float const volumeOff = 0.0;
-    float const volumeMin = 0.5;
-    float const volumeMax = 0.75;
-    float const recordingBeats = 8;
-    float const fadeInBeats = 3;
-    float const fadeOutBeats = 2;
-    int const frontMax = 81;
-    int const sideMax = 25;
-    int const backMax = 15;
-    float const filterMin = 60;
-    float const filterMax = 135;
-    int const showLength = 60 * 5;
+    int const oneMinute = 60;
+    int const showLength = oneMinute * 5;
 };
 
 class blackout_view : public ofxBenG::window_view {

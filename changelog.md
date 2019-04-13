@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Nothing at the moment
 
+## [2.0.0] - 2019-4-1
+### Added
+- Light control via OSC messages sent over ethernet to an ETC Element
+- Test button plays audio and massages the lights for peace of mind
+- Media
+   - [performance]()
+   - [rehearsal](https://www.dropbox.com/sh/iexaglcbw07zlbj/AAAzBb6Eqb3XLuQ9mN39sQ2Ra?dl=0)
+
+## [1.5.0] - 2019-2-17
+### Added
+- venue: 12 Minutes Max audition at Base
+- setup: ladder, chair
+- Media
+   - [performance](https://vimeo.com/317951665)
+
 ## [1.4.0] - 2019-1-21
 ### Added
 - Camera previews on app window
